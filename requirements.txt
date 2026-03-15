@@ -3,7 +3,7 @@ numpy
 matplotlib
 seaborn
 plotly
-jupyter
 scikit-learn
-streamlit
+streamlit>=1.32.0
+textblob
 sentence-transformers
