@@ -100,16 +100,10 @@ with col1:
     g_labels = ["Male", "Female", "Non-binary", "Prefer not to say"]
     g_counts = [int(df["gender"].value_counts().get(g, 0)) for g in g_order]
 
-    GENDER_COLORS = {
-        "male":   "#A8C8E8",  # blue
-        "female": "#F4C2CE",  # pink
-        "non-binary":        "#F7D4A0",
-        "prefer_not_to_say": "#C8CBD4",
-    }
     fig_g = go.Figure(go.Bar(
         x=g_labels,
         y=g_counts,
-        marker_color=[GENDER_COLORS.get(g, "#aaaaaa") for g in g_order],
+        marker_color="#A8D8B8",
         marker_line_width=0,
     ))
     fig_g.update_layout(
@@ -126,7 +120,7 @@ with col2:
     st.subheader("Age Distribution")
     ages = df["age"].dropna().astype(float).values
 
-    bin_size  = 4
+    bin_size  = 10
     bin_edges = np.arange(0, 101, bin_size)
     counts, edges = np.histogram(ages, bins=bin_edges)
     centres = 0.5 * (edges[:-1] + edges[1:])
@@ -135,6 +129,7 @@ with col2:
     kde_y = gaussian_kde(ages, bw_method=0.4)(kde_x)   # raw density
 
     fig_a = go.Figure()
+    bin_labels = [f"{int(edges[i])}–{int(edges[i+1])}" for i in range(len(counts))]
     fig_a.add_trace(go.Bar(
         x=centres,
         y=counts,
@@ -145,6 +140,8 @@ with col2:
         opacity=0.85,
         name="Count",
         yaxis="y1",
+        customdata=bin_labels,
+        hovertemplate="Age %{customdata}: %{y}<extra></extra>",
     ))
     fig_a.add_trace(go.Scatter(
         x=kde_x,
@@ -156,7 +153,7 @@ with col2:
     ))
     fig_a.update_layout(
         **LAYOUT_BASE,
-        xaxis=dict(showgrid=False, title="Age (years)", range=[15, 85], dtick=10),
+        xaxis=dict(showgrid=False, title="Age (years)", range=[0, 100], dtick=10),
         yaxis=dict(showgrid=True, gridcolor="#ECECEC", title="Number of Participants", range=[0, 120]),
         yaxis2=dict(
             title=dict(text="Density", font=dict(color="#C06080")),
@@ -215,7 +212,7 @@ cont_counts = cont.values.tolist()
 fig_cont = go.Figure(go.Bar(
     x=cont_labels,
     y=cont_counts,
-    marker_color=[CONTINENT_COLORS.get(c, "#aaaaaa") for c in cont_labels],
+    marker_color="#C4B8E8",
     marker_line_width=0,
 ))
 fig_cont.update_layout(
@@ -312,7 +309,7 @@ occ_max = max(occ_cat_counts) if occ_cat_counts else 1
 fig_o = go.Figure(go.Bar(
     x=occ_cats_ordered,
     y=occ_cat_counts,
-    marker_color=[OCCUPATION_CATEGORY_COLORS.get(c, "#bdc3c7") for c in occ_cats_ordered],
+    marker_color="#F8DC94",
     marker_line_color="white",
     marker_line_width=1,
     hovertemplate="<b>%{x}</b><br>Count: %{y}<extra></extra>",
@@ -456,7 +453,7 @@ with st.container():
     fig_d = go.Figure(go.Bar(
         x=dom_cats_ordered,
         y=dom_cat_counts,
-        marker_color=[CATEGORY_COLORS.get(c, "#aaaaaa") for c in dom_cats_ordered],
+        marker_color="#A8DDD4",
         marker_line_color="white",
         marker_line_width=1,
         hovertemplate="<b>%{x}</b><br>Count: %{y}<extra></extra>",

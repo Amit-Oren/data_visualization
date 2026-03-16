@@ -28,11 +28,6 @@ df = load_data()
 
 # ── Sidebar ───────────────────────────────────────────────────────────────────
 st.sidebar.header("Settings")
-color_by_label = st.sidebar.selectbox(
-    "Color scatter by",
-    ["Cluster", "Domain"],
-)
-color_by = {"Cluster": "cluster", "Domain": "domain"}[color_by_label]
 
 
 # ── Run K-Means ───────────────────────────────────────────────────────────────
@@ -66,61 +61,37 @@ df["hover_text"] = df.apply(
 
 # ── Shared domain color map (used by both Cluster and Domain views) ────────────
 PLOTLY_COLORS = [
-    # "#A9AEF3", "#E37865", "#63D7B8", "#B68BE3", "#F7A160",
-    # "#4464D7", "#FD97B4", "#B8EA7C", "#FF97CB", "#FECB52",
-    # "#76B7F0", "#4C854F", "#75EE8F", "#ED8DF2", "#F77745"
-
-"#9DA3EE", "#DC6E58", "#52C9A8", "#A87ADA", "#F4964E",
-"#3A5AC8", "#FC88AA", "#AADF6C", "#FC88BE", "#FEC038",
-"#62A8EC", "#4A7A4C", "#6AE488", "#E88AEE", "#F46838"
+    "#FF6B7A", "#FF8C42", "#F5D000", "#3EC98A", "#7B8FE8",
+    "#E8607A", "#5AAAD8", "#8EC840", "#D8A040", "#8060D8",
+    "#FF8040", "#6EC858", "#40A8D8", "#D860A8", "#40D898",
+    "#FFB020", "#3AAED8", "#FE9040", "#50C8A0", "#A060D0",
+    "#FF70B0", "#40C8F8", "#FFB060", "#90E040", "#F060C8",
+    "#40D8FF", "#FFB860", "#60E880", "#D060FF", "#FF6060",
+    "#50B8FE", "#E8F020", "#70E870", "#FF80FF", "#FF6848",
+    "#00D8FF", "#80C870", "#E06030", "#C89870", "#60A8C8",
 ]
-all_domains_sorted = sorted(df["domain"].dropna().unique())
-domain_color = {d: PLOTLY_COLORS[i % len(PLOTLY_COLORS)] for i, d in enumerate(all_domains_sorted)}
+cluster_ids = sorted(df["cluster"].unique(), key=int)
+cluster_color = {cid: PLOTLY_COLORS[i % len(PLOTLY_COLORS)] for i, cid in enumerate(cluster_ids)}
 
-if color_by == "cluster":
-    fig_scatter = go.Figure()
-    cluster_ids = sorted(df["cluster"].unique(), key=int)
-    cluster_ids = sorted(cluster_ids, key=lambda cid: df[df["cluster"] == cid]["domain"].value_counts().index[0])
-    seen_domains = set()
-    for cluster_id in cluster_ids:
-        cdata = df[df["cluster"] == cluster_id]
-        top_domain = cdata["domain"].value_counts().index[0]
-        first_occurrence = top_domain not in seen_domains
-        seen_domains.add(top_domain)
-        fig_scatter.add_trace(go.Scatter(
-            x=cdata["tsne_x"], y=cdata["tsne_y"],
-            mode="markers",
-            name=top_domain.replace("_", " ").title(),
-            legendgroup=top_domain,
-            showlegend=first_occurrence,
-            marker=dict(
-                color=domain_color.get(top_domain, "#aaaaaa"),
-                size=9, opacity=0.75, line=dict(color="white", width=0.6),
-            ),
-            text=cdata["hover_text"],
-            hovertemplate="%{text}<extra></extra>",
-        ))
-
-elif color_by == "domain":
-    fig_scatter = go.Figure()
-    for domain in all_domains_sorted:
-        cdata = df[df["domain"] == domain]
-        fig_scatter.add_trace(go.Scatter(
-            x=cdata["tsne_x"], y=cdata["tsne_y"],
-            mode="markers",
-            name=domain.replace("_", " ").title(),
-            marker=dict(
-                color=domain_color.get(domain, "#aaaaaa"),
-                size=9, opacity=0.75, line=dict(color="white", width=0.6),
-            ),
-            text=cdata["hover_text"],
-            hovertemplate="%{text}<extra></extra>",
-        ))
+fig_scatter = go.Figure()
+for cluster_id in cluster_ids:
+    cdata = df[df["cluster"] == cluster_id]
+    fig_scatter.add_trace(go.Scatter(
+        x=cdata["tsne_x"], y=cdata["tsne_y"],
+        mode="markers",
+        name=f"Cluster {cluster_id}",
+        marker=dict(
+            color=cluster_color[cluster_id],
+            size=9, opacity=0.75, line=dict(color="white", width=0.6),
+        ),
+        text=cdata["hover_text"],
+        hovertemplate="%{text}<extra></extra>",
+    ))
 
 
 fig_scatter.update_layout(
     height=600,
-    plot_bgcolor="#FAFAFA",
+    plot_bgcolor="white",
     xaxis=dict(
         title="t-SNE Dimension 1",
         showticklabels=True,
@@ -158,11 +129,7 @@ To make 40-dimensional clusters visible to the human eye, **t-SNE** was applied 
 ---
 
 #### How to read it
-
-| Mode | What the colors show |
-|------|---------------------|
-| **Cluster** | Each color = one K-Means group. Points of the same color were clustered together by the algorithm. The legend label shows the most common domain in that cluster. |
-| **Domain** | Each color = one topic area (e.g. anxiety, relationships). Use this to see whether domain boundaries match cluster boundaries. |
+Each color = one K-Means group. The legend label shows the most common domain in that cluster.
 
 - **Tight, well-separated blobs** → the model found clean, meaningful groups
 - **Mixed or overlapping colors** → those conversation types are semantically similar — hard even for the algorithm to separate
@@ -171,5 +138,5 @@ To make 40-dimensional clusters visible to the human eye, **t-SNE** was applied 
 ---
 
 #### What to look for
-Switch between **Cluster** and **Domain** views. If the color patterns look similar, it means the algorithm recovered domain structure *purely from conversation content* — without being told what domain each conversation belonged to. That's the signal this chart is trying to surface.
+If clusters align with domains, it means the algorithm recovered topic structure *purely from conversation content* — without being told what domain each conversation belonged to. That's the signal this chart is trying to surface.
 """)

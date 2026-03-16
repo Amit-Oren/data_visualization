@@ -104,6 +104,7 @@ for severity in SEVERITY_ORDER:
         spanmode="hard",
         legendgroup="Client",
         showlegend=(severity == "Mild"),
+        hoverinfo="skip",
     ))
 
     fig.add_trace(go.Violin(
@@ -122,6 +123,7 @@ for severity in SEVERITY_ORDER:
         spanmode="hard",
         legendgroup="Bot",
         showlegend=(severity == "Mild"),
+        hoverinfo="skip",
     ))
 
 fig.update_layout(

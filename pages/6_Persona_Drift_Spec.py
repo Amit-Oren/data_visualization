@@ -178,7 +178,7 @@ def compute_adherence(turns, conv_meta):
     for i, ct in enumerate(client_turns):
         text = ct["text"]
         rows.append({
-            "turn_seq":              i + 1,
+            "turn_seq":              int(ct.get("turn_index", i * 2 + 1)),
             "Emotion Consistency":   score_emotion(text, emotion),
             "Assertiveness Match":   score_assertiveness(text, assertiv),
             "Self-Disclosure Match": score_disclosure(text, disclos),
@@ -282,10 +282,10 @@ fig.add_annotation(x=df["turn_seq"].iloc[-1], y=last_val,
     font=dict(size=12, color=trend_color))
 
 fig.update_layout(
-    xaxis_title="Client turn (sequential)",
+    xaxis_title="Turn index (client turns only — bot turns excluded)",
     yaxis_title="Persona drift score  (each layer = one signal, max 0.20 each)",
     yaxis=dict(range=[0, 1.12], gridcolor="#E8E8E8", zeroline=False),
-    xaxis=dict(showgrid=False, dtick=1),
+    xaxis=dict(showgrid=False, dtick=2, tickvals=df["turn_seq"].tolist()),
     height=480,
     plot_bgcolor="white",
     legend=dict(font=dict(size=11), orientation="h",
@@ -313,6 +313,37 @@ Each coloured band measures one dimension of adherence to the spec. When a band 
 """)
 
 with st.expander("Per-turn data"):
-    display = df[["turn_seq", "adherence_score"] + SIGNALS + ["text"]].copy()
-    display.columns = ["Turn", "Adherence"] + SIGNALS + ["Client Text"]
-    st.dataframe(display.round(3), use_container_width=True, hide_index=True)
+    # Build full conversation table (all turns)
+    all_rows = []
+    for t in conv["turns"]:
+        turn_idx = int(t.get("turn_index", 0))
+        is_client = t["speaker"] == "client"
+        # look up adherence scores for client turns
+        match = df[df["turn_seq"] == turn_idx]
+        if is_client and not match.empty:
+            row = match.iloc[0]
+            all_rows.append({
+                "Turn": turn_idx,
+                "Speaker": "Client",
+                "Adherence":             round(row["adherence_score"], 3),
+                "Emotion Consistency":   round(row["Emotion Consistency"], 3),
+                "Assertiveness Match":   round(row["Assertiveness Match"], 3),
+                "Self-Disclosure Match": round(row["Self-Disclosure Match"], 3),
+                "No Filler Language":    round(row["No Filler Language"], 3),
+                "Personal Vocabulary":   round(row["Personal Vocabulary"], 3),
+                "Text": t["text"],
+            })
+        else:
+            all_rows.append({
+                "Turn": turn_idx,
+                "Speaker": "Bot",
+                "Adherence": "",
+                "Emotion Consistency": "",
+                "Assertiveness Match": "",
+                "Self-Disclosure Match": "",
+                "No Filler Language": "",
+                "Personal Vocabulary": "",
+                "Text": t["text"],
+            })
+    full_df = pd.DataFrame(all_rows).sort_values("Turn").reset_index(drop=True)
+    st.dataframe(full_df, use_container_width=True, hide_index=True)
