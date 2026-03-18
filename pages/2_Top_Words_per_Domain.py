@@ -20,7 +20,26 @@ ALL_STOPWORDS = tuple(sorted(ENGLISH_STOP_WORDS | EXTRA_STOPWORDS))
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "conversations_GPT-GPT.jsonl")
 
-st.title("Most Distinctive Words per Domain")
+st.title("What Words Define Each Conversation Domain?")
+
+st.markdown("**What**")
+st.markdown(
+    "An interactive visualization of the most distinctive words used in each conversation domain. "
+    "Each bar chart shows the top words that are uniquely characteristic of that domain — "
+    "words that appear frequently in that domain but are rare across all others."
+)
+
+st.markdown("""
+**Why**
+- To understand what language and topics define each conversation domain
+- To verify that the synthetic conversations are topically coherent and domain-appropriate
+- To identify the key vocabulary that distinguishes one domain from another
+
+**How**
+- All conversation turns across each domain were concatenated into a single text corpus per domain
+- TF-IDF (Term Frequency–Inverse Document Frequency) was applied across domains to score each word by how distinctive it is to a given domain relative to all others
+- The top-scoring words per domain were extracted and visualized as horizontal bar charts, with bar length representing the TF-IDF score
+""")
 
 # ── Load & build one text blob per domain ─────────────────────────────────────
 @st.cache_data

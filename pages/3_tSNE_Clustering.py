@@ -12,7 +12,27 @@ EMBEDDINGS_CSV = os.path.join(os.path.dirname(__file__), "..", "output_visualiza
 OPTIMAL_K = 40
 
 st.set_page_config(page_title="t-SNE Clustering", layout="wide")
-st.title("t-SNE Conversation Map")
+st.title("How Conversations Naturally Group in Semantic Space")
+
+st.markdown("**What**")
+st.markdown(
+    "An interactive 2D visualization of multi-turn LLM conversations. "
+    "Each point represents a single conversation. "
+    "Colors indicate clusters of semantically similar conversations."
+)
+
+st.markdown("""
+**Why**
+- To explore patterns and structure in large-scale conversational data
+- To examine how domains, emotions, and personas naturally group together
+- To assess whether conversations align with their intended contexts
+
+**How**
+- Conversations were encoded into semantic embeddings using a pre-trained language model, then reduced to 50 dimensions via PCA
+- K-Means clustering (k=40) was applied to group semantically similar conversations in the 50-dimensional embedding space
+- t-SNE was used to project these high-dimensional embeddings into a 2D space for visualization — points that are close together represent conversations with similar meaning and style
+- Cluster quality was evaluated using the **Silhouette Score** (shown below), which measures how well each conversation fits its assigned cluster
+""")
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 if not os.path.exists(EMBEDDINGS_CSV):
@@ -40,6 +60,11 @@ with st.spinner("Running K-Means clustering..."):
 
 df["cluster"] = results["labels"].astype(str)
 
+# ── Cluster quality metrics ────────────────────────────────────────────────────
+c1, c2, c3 = st.columns(3)
+c1.metric("Clusters (k)", OPTIMAL_K)
+c2.metric("Silhouette Score", f"{results['silhouette']:.3f}", help="Range −1 to 1. Higher = better-defined clusters.")
+c3.metric("Conversations", len(df))
 
 # ── t-SNE Scatter ─────────────────────────────────────────────────────────────
 st.subheader("t-SNE Scatter Plot — Conversations in 2D Space")

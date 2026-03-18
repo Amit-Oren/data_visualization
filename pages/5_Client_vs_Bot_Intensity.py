@@ -11,12 +11,27 @@ import plotly.graph_objects as go
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "conversations_GPT-GPT.jsonl")
 
 st.set_page_config(page_title="Client vs Bot Intensity", layout="wide")
-st.title("Client vs Bot Intensity")
+st.title("Does the Bot Mirror the Client's Emotional Intensity?")
+
+st.markdown("**What**")
 st.markdown(
-    "Does the **therapist bot mirror, dampen, or amplify** the client's emotional intensity? "
-    "Each violin shows the distribution of TextBlob intensity for each speaker "
-    "across Mild / Moderate / Severe persona groups."
+    "A comparison of the emotional intensity expressed by the client and the therapist bot "
+    "across conversations with different assigned severity levels. "
+    "Each violin shows the distribution of message-level intensity scores for one speaker. "
+    "The split shape allows direct comparison between client and bot behavior within **Mild**, **Moderate**, and **Severe** persona groups."
 )
+
+st.markdown("""
+**Why**
+- To examine whether the therapist bot responds with a similar, lower, or stronger emotional intensity than the client
+- To explore whether the bot mirrors the client's emotional severity appropriately across different emotional contexts
+- To assess whether response behavior remains sensitive to the intended emotional profile of the conversation
+
+**How**
+- Each conversation was assigned to a severity group based on the client's predefined emotion label, mapped into Mild, Moderate, or Severe categories
+- For every client and bot message, an intensity score was computed using TextBlob sentiment features, combining polarity strength and subjectivity into a single emotional intensity measure
+- These scores were aggregated by speaker and severity group, then visualized as split violin plots to compare the full distribution and average intensity of client and bot messages
+""")
 
 # ── Emotion → severity ─────────────────────────────────────────────────────────
 EMOTION_SEVERITY = {
@@ -142,42 +157,3 @@ fig.update_layout(
 )
 
 st.plotly_chart(fig, use_container_width=True)
-
-
-st.caption("Left half = Client · Right half = Bot · Centre line = mean")
-
-st.divider()
-
-with st.expander("What is this visualization and how do I read it?"):
-    st.markdown("""
-**The core question:** Does the therapist bot mirror, dampen, or amplify the emotional intensity of the client — and does that pattern change depending on how severe the client's emotional state is?
-
----
-
-#### What
-Each shape is a **violin plot** — a smoothed view of how intensity scores are distributed across all turns for that speaker and severity group.
-The wider the violin, the more turns cluster at that intensity level.
-The centre line marks the **mean** intensity.
-
-| Column | Meaning |
-|--------|---------|
-| **Mild** | Personas with calm, content, or hopeful emotions |
-| **Moderate** | Personas with anxious, stressed, or frustrated emotions |
-| **Severe** | Personas with sad, depressed, or angry emotions |
-
----
-
-#### How to read it
-- **Left (green) half** = Client turns · **Right (blue) half** = Bot turns
-- A **higher mean line** = that speaker uses more emotionally intense language on average
-- **Wider belly** = intensity is spread across a broad range; **narrow shape** = most turns cluster tightly around one value
-- If the bot's mean is consistently *lower* than the client's, the bot is dampening intensity (a calming effect)
-- If they track closely, the bot is mirroring the client's emotional level
-
----
-
-#### What to look for
-- Does the gap between Client and Bot means grow as severity increases?
-- Is the bot's distribution narrower than the client's — suggesting more controlled, consistent language?
-- Which severity group shows the biggest mismatch between the two speakers?
-""")

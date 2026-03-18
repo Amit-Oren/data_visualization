@@ -10,8 +10,26 @@ from textblob import TextBlob
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "conversations_GPT-GPT.jsonl")
 
-st.title("Emotional Journey")
-st.markdown("How does the client's sentiment shift turn by turn — from the first message to the last?")
+st.title("Client's Emotional Journey")
+
+st.markdown("**What**")
+st.markdown(
+    "An interactive turn-by-turn visualization of the client's emotional trajectory throughout a conversation. "
+    "Each point represents the sentiment polarity of a single client message. "
+    "The line shows whether the client's emotional state becomes more positive, more negative, or remains stable from the beginning to the end of the dialogue."
+)
+
+st.markdown("""
+**Why**
+- To track how the client's emotional tone evolves across the conversation
+- To examine whether the interaction leads to emotional improvement, decline, or stability
+- To better understand the emotional dynamics of multi-turn LLM conversations and whether they follow expected conversational patterns
+
+**How**
+- For each selected conversation, only the client turns were extracted and analyzed
+- Sentiment polarity was computed for every client message using TextBlob, producing a score between negative and positive sentiment
+- These scores were plotted sequentially across turns, and the first and last values were compared to determine the overall emotional shift across the conversation
+""")
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 @st.cache_data

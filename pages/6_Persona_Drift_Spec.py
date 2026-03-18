@@ -13,12 +13,26 @@ DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "conversations
 
 st.set_page_config(page_title="Persona Drift", layout="wide")
 
-st.title("Persona Drift")
+st.title("Does the Client Stay True to Its Persona?")
+
+st.markdown("**What**")
 st.markdown(
-    "Does the **client LLM agent stay true to its assigned persona** throughout the conversation? "
-    "Each turn is scored against the persona specification — not against the first message. "
-    "A falling score means the agent is drifting away from who it was told to be."
+    "An interactive visualization of how consistently the client LLM maintains its assigned persona across a multi-turn conversation. "
+    "Each point in the timeline represents a client turn scored against the original persona specification. "
+    "The overall score reflects how closely the agent's language matches its assigned emotion, assertiveness, and self-disclosure style over time."
 )
+
+st.markdown("""
+**Why**
+- To examine whether the client LLM stays faithful to its intended persona throughout the conversation
+- To detect gradual behavioral drift as the dialogue progresses
+- To evaluate whether generated conversations remain aligned with their designed psychological and conversational characteristics
+
+**How**
+- For each conversation, only the client turns were extracted and compared to the assigned persona fields
+- A multi-signal adherence score was computed for every turn using: emotion consistency, assertiveness match, self-disclosure match, absence of filler language, and vocabulary richness
+- These signal scores were combined into a single persona adherence score per turn, and a rolling trend line was used to visualize whether the persona remained stable or drifted over time
+""")
 
 # ── Load data ──────────────────────────────────────────────────────────────────
 @st.cache_data
