@@ -1,10 +1,19 @@
-# Conversation Analytics Dashboard
+# Visualizing Persona-Driven Multi-Agent Conversations
 
-A Streamlit dashboard built as the final project for a **Data Visualization course**. It explores a synthetic dataset of GPT-to-GPT conversations, where each conversation is driven by a unique persona profile.
+A Streamlit dashboard built as the final project for a **Data Visualization course**.
 
-## Dataset
+**Eden Cohen · Amit Oren**
 
-The dataset (`data/conversations_GPT-GPT.jsonl`) contains synthetic conversations between two language model agents. Each conversation is associated with a persona profile defined by:
+## Data Source
+
+Generated using the **SPASM** multi-agent simulation framework —
+**S**table **P**ersona driven **A**gent **S**imulation for **M**ulti-turn dialogue generation.
+
+Persona-driven, multi-turn conversations between LLM agents, where one agent assumes the role of a **client** seeking advice and the other acts as a **responder**. The conversations span diverse domains and simulated human personas, capturing both topical and emotional variation.
+
+The dataset was provided in raw JSON format, consisting of multi-turn conversations between agents.
+
+## Persona Attributes
 
 | Attribute | Examples |
 |---|---|
@@ -13,18 +22,19 @@ The dataset (`data/conversations_GPT-GPT.jsonl`) contains synthetic conversation
 | **Assertiveness** | low, medium, high |
 | **Self-disclosure level** | low, medium, high |
 | **Occupation** | engineer, teacher, student, nurse |
+| **Demographics** | age, gender |
+| **Style** | expressiveness, intensity |
 
 ## Visualizations
 
 | # | Page | What it shows |
 |---|------|---------------|
 | 1 | **Demographics Overview** | Age, gender, and occupation breakdown of the personas |
-| 2 | **Top Words per Domain** | Most distinctive vocabulary per domain using TF-IDF scoring |
-| 3 | **t-SNE Conversation Map** | Conversation embeddings reduced to 2D — similar conversations cluster together |
-| 4 | **Domain Semantic Similarity** | Heatmap of how semantically similar domains are to each other |
-| 5 | **Client vs Bot Intensity** | Split violin comparing emotional intensity of client vs. bot across severity groups |
-| 6 | **Persona Drift** | Stacked area chart tracking how well the client agent adheres to its assigned persona over time |
-| 7 | **Emotional Journey** | Turn-by-turn sentiment polarity across a conversation |
+| 2 | **t-SNE Conversation Map** | Conversation embeddings reduced to 2D — similar conversations cluster together |
+| 3 | **Client vs Bot Intensity** | Comparing emotional intensity of client vs. bot messages |
+| 4 | **Emotional Journey** | Turn-by-turn sentiment across a conversation |
+| 5 | **Persona Drift** | Stacked area chart tracking how well the client agent maintains its assigned persona over time |
+| 6 | **Persona Drift Density** | Ridge plot of persona drift score distributions grouped by emotion |
 
 ## Setup
 
@@ -41,7 +51,7 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # 4. Run the app
-streamlit run app.py
+streamlit run Introduction.py
 ```
 
 The app will open at `http://localhost:8501`.
@@ -50,15 +60,14 @@ The app will open at `http://localhost:8501`.
 
 ```
 data_visualization/
-├── app.py                        # Home page
+├── Introduction.py               # Home / introduction page
 ├── pages/
 │   ├── 1_Demographics_Overview.py
-│   ├── 2_Top_Words_per_Domain.py
-│   ├── 3_tSNE_Clustering.py
-│   ├── 4_Embedding_Similarity.py
-│   ├── 5_Client_vs_Bot_Intensity.py
-│   ├── 6_Persona_Drift_Spec.py
-│   └── 7_Emotional_Journey.py
+│   ├── 2_tSNE_Clustering.py
+│   ├── 3_Client_vs_Bot_Intensity.py
+│   ├── 4_Emotional_Journey.py
+│   ├── 5_Persona_Drift_Spec.py
+│   └── 6_Persona_Drift_Density.py
 ├── data/
 │   └── conversations_GPT-GPT.jsonl
 ├── utils/

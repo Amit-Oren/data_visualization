@@ -31,7 +31,7 @@ st.markdown("""
 - Conversations were encoded into semantic embeddings using a pre-trained language model, then reduced to 50 dimensions via PCA
 - K-Means clustering (k=40) was applied to group semantically similar conversations in the 50-dimensional embedding space
 - t-SNE was used to project these high-dimensional embeddings into a 2D space for visualization — points that are close together represent conversations with similar meaning and style
-- Cluster quality was evaluated using the **Silhouette Score** (shown below), which measures how well each conversation fits its assigned cluster
+- Cluster quality was evaluated using the Silhouette Score, which measures how well each conversation fits its assigned cluster
 """)
 
 # ── Load data ─────────────────────────────────────────────────────────────────
@@ -63,12 +63,10 @@ df["cluster"] = results["labels"].astype(str)
 # ── Cluster quality metrics ────────────────────────────────────────────────────
 c1, c2, c3 = st.columns(3)
 c1.metric("Clusters (k)", OPTIMAL_K)
-c2.metric("Silhouette Score", f"{results['silhouette']:.3f}", help="Range −1 to 1. Higher = better-defined clusters.")
+c2.metric("Silhouette Score", f"{results['silhouette']:.3f}")
 c3.metric("Conversations", len(df))
 
 # ── t-SNE Scatter ─────────────────────────────────────────────────────────────
-st.subheader("t-SNE Scatter Plot — Conversations in 2D Space")
-
 df["hover_text"] = df.apply(
     lambda row: (
         f"<b>Conversation {row['conversation_id']}</b><br>"
@@ -136,32 +134,4 @@ fig_scatter.update_layout(
 
 st.plotly_chart(fig_scatter, width='stretch')
 
-st.divider()
 
-
-
-with st.expander("What is this visualization and how do I read it?", expanded=True):
-    st.markdown("""
-**The core question:** Do conversations with similar topics and styles naturally group together — even when we don't tell the model what the topic is?
-
----
-
-#### What was done
-Each conversation was converted into a single numeric vector using a language embedding model — a representation that captures the *meaning* of the whole conversation, not just keywords. K-Means then grouped these vectors into **40 clusters** based on similarity in that meaning space.
-
-To make 40-dimensional clusters visible to the human eye, **t-SNE** was applied — a technique that compresses high-dimensional distances into a 2D map while preserving neighborhood structure. **Points that are close together had similar conversations.**
-
----
-
-#### How to read it
-Each color = one K-Means group. The legend label shows the most common domain in that cluster.
-
-- **Tight, well-separated blobs** → the model found clean, meaningful groups
-- **Mixed or overlapping colors** → those conversation types are semantically similar — hard even for the algorithm to separate
-- **Hover over any point** to see the conversation's domain, cluster, occupation, age, and other persona fields
-
----
-
-#### What to look for
-If clusters align with domains, it means the algorithm recovered topic structure *purely from conversation content* — without being told what domain each conversation belonged to. That's the signal this chart is trying to surface.
-""")

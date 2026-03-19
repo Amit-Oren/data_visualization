@@ -234,30 +234,6 @@ first_val = df["adherence_score"].iloc[0]
 last_val  = df["adherence_score"].iloc[-1]
 delta     = last_val - first_val
 
-# ── Persona spec badges ────────────────────────────────────────────────────────
-st.markdown(
-    f"""
-    <div style='display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;'>
-      <span style='background:#EAF4FB;border:1px solid #A8D2EB;border-radius:20px;
-                   padding:4px 14px;font-size:0.88rem;color:#2c5f7a;'>
-        Emotion: <b>{conv['current_emotion'].title()}</b>
-      </span>
-      <span style='background:#EAF4FB;border:1px solid #74ABC6;border-radius:20px;
-                   padding:4px 14px;font-size:0.88rem;color:#2c5f7a;'>
-        Assertiveness: <b>{conv['assertiveness'].title()}</b>
-      </span>
-      <span style='background:#EAF4FB;border:1px solid #A3BAD0;border-radius:20px;
-                   padding:4px 14px;font-size:0.88rem;color:#2c5f7a;'>
-        Self-disclosure: <b>{conv['self_disclosure_level'].title()}</b>
-      </span>
-      <span style='background:#F0F4F0;border:1px solid #a0bca0;border-radius:20px;
-                   padding:4px 14px;font-size:0.88rem;color:#3a5a3a;'>
-        Domain: <b>{conv['domain'].replace('_',' ').title()}</b>
-      </span>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
 
 # ── Stacked area chart ─────────────────────────────────────────────────────────
 SIGNAL_COLORS = {

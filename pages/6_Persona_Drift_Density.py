@@ -18,21 +18,24 @@ st.title("How Is Persona Drift Distributed Across Conversations?")
 
 st.markdown("**What**")
 st.markdown(
-    "A ridge plot of KDE curves showing how persona drift scores are distributed across conversations, "
-    "grouped by emotion. Each curve shows where drift levels concentrate, with a dotted line marking the mean."
+    "A follow-up distributional view of the persona drift analysis, showing how conversation-level persona adherence scores "
+    "are spread across different emotion groups. "
+    "Instead of tracking drift within a single conversation over time, this visualization summarizes the overall distribution "
+    "of drift scores across many conversations. "
+    "Each ridge curve represents one emotion group, revealing where persona adherence tends to concentrate and how stable "
+    "or variable those conversations are overall."
 )
 
 st.markdown("""
 **Why**
-- Understand whether conversations stay stable or drift from the persona
-- Detect inconsistencies (e.g., some conversations drift a lot while others don't)
-- Compare drift patterns across emotions, not just average drift
+- To move beyond single-conversation drift trajectories and examine broader patterns across the dataset
+- To identify whether some emotion groups tend to produce more stable persona adherence while others show greater drift or variability
+- To compare not only average drift levels, but also the full shape of the distribution, including concentration, spread, and overlap between emotional groups
 
 **How**
-- Score each turn using 5 signals → average to a conversation-level drift score (0–1)
-- Group conversations by emotion
-- Fit a Gaussian KDE per group (smooth distribution)
-- Normalize peaks and stack as a ridge plot, sorted by mean drift
+- For each conversation, the same multi-signal persona adherence framework was applied to the client turns, using emotion consistency, assertiveness match, self-disclosure match, filler-language penalty, and vocabulary richness
+- These turn-level scores were averaged into a single conversation-level adherence score, representing how well the persona was maintained overall
+- The conversations were then grouped by assigned emotion, a Gaussian KDE was fitted for each group, and the resulting smoothed distributions were displayed as a ridge plot sorted by mean adherence score
 """)
 
 # ── Signal constants ───────────────────────────────────────────────────────────
