@@ -30,9 +30,17 @@ st.markdown("""
 
 **How**
 - For each conversation, only the client turns were extracted and compared to the assigned persona fields
-- A multi-signal adherence score was computed for every turn using: emotion consistency, assertiveness match, self-disclosure match, absence of filler language, and vocabulary richness
-- These signal scores were combined into a single persona adherence score per turn, and a rolling trend line was used to visualize whether the persona remained stable or drifted over time
+- A multi-signal adherence score was computed for every turn using five signals, each scored 0–1:
+  - **Emotion Consistency** — TextBlob polarity of the turn vs. the expected polarity for the assigned emotion (e.g. *depressed* → −0.8); distance from target penalises the score
+  - **Assertiveness Match** — TextBlob subjectivity vs. the expected range for low / medium / high assertiveness; in-range = 1.0, penalty outside
+  - **Self-Disclosure Match** — first-person pronoun ratio ("I", "me", "my"…) vs. the expected range for the assigned disclosure level
+  - **No Filler Language** — penalises bot-speak phrases ("absolutely", "great question", "happy to help") weighted by message length
+  - **Personal Vocabulary** — type-token ratio (unique words ÷ total words); repetitive language scores lower
+- Each signal contributes equally (×0.20); their sum is the per-turn adherence score (max 1.0)
+- A 3-turn rolling mean is overlaid as a trend line to reveal gradual drift
 """)
+
+st.divider()
 
 # ── Load data ──────────────────────────────────────────────────────────────────
 @st.cache_data
@@ -226,21 +234,28 @@ first_val = df["adherence_score"].iloc[0]
 last_val  = df["adherence_score"].iloc[-1]
 delta     = last_val - first_val
 
-col1, col2, col3, col4 = st.columns(4)
-col1.metric("Starting score", f"{first_val:.2f}")
-col2.metric("Final score",    f"{last_val:.2f}", delta=f"{delta:+.2f}")
-col3.metric("Total change",   f"{abs(delta):.2f}", delta=f"{delta:+.2f}", delta_color="inverse")
-col4.metric("Client turns",   str(len(df)))
-
-if delta < -0.10:
-    verdict, vcolor = "Persona drift detected — the client agent drifted away from its assigned persona", "#e74c3c"
-elif delta < -0.03:
-    verdict, vcolor = "Mild drift — subtle divergence from the assigned character", "#e67e22"
-else:
-    verdict, vcolor = "Persona maintained — the client agent stayed true to its specification", "#27ae60"
-
+# ── Persona spec badges ────────────────────────────────────────────────────────
 st.markdown(
-    f"<p style='font-size:1.05rem;font-weight:600;color:{vcolor};'>{verdict}</p>",
+    f"""
+    <div style='display:flex;gap:10px;margin-bottom:18px;flex-wrap:wrap;'>
+      <span style='background:#EAF4FB;border:1px solid #A8D2EB;border-radius:20px;
+                   padding:4px 14px;font-size:0.88rem;color:#2c5f7a;'>
+        Emotion: <b>{conv['current_emotion'].title()}</b>
+      </span>
+      <span style='background:#EAF4FB;border:1px solid #74ABC6;border-radius:20px;
+                   padding:4px 14px;font-size:0.88rem;color:#2c5f7a;'>
+        Assertiveness: <b>{conv['assertiveness'].title()}</b>
+      </span>
+      <span style='background:#EAF4FB;border:1px solid #A3BAD0;border-radius:20px;
+                   padding:4px 14px;font-size:0.88rem;color:#2c5f7a;'>
+        Self-disclosure: <b>{conv['self_disclosure_level'].title()}</b>
+      </span>
+      <span style='background:#F0F4F0;border:1px solid #a0bca0;border-radius:20px;
+                   padding:4px 14px;font-size:0.88rem;color:#3a5a3a;'>
+        Domain: <b>{conv['domain'].replace('_',' ').title()}</b>
+      </span>
+    </div>
+    """,
     unsafe_allow_html=True,
 )
 
@@ -296,8 +311,8 @@ fig.add_annotation(x=df["turn_seq"].iloc[-1], y=last_val,
     font=dict(size=12, color=trend_color))
 
 fig.update_layout(
-    xaxis_title="Turn index (client turns only — bot turns excluded)",
-    yaxis_title="Persona drift score  (each layer = one signal, max 0.20 each)",
+    xaxis_title="Client Turn Index",
+    yaxis_title="Persona Drift Score",
     yaxis=dict(range=[0, 1.12], gridcolor="#E8E8E8", zeroline=False),
     xaxis=dict(showgrid=False, dtick=2, tickvals=df["turn_seq"].tolist()),
     height=480,
@@ -310,54 +325,26 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
-# ── Explanation ────────────────────────────────────────────────────────────────
-with st.expander("How to read this chart"):
-    st.markdown(f"""
-**Persona spec:** Emotion = *{conv['current_emotion'].title()}* · Assertiveness = *{conv['assertiveness'].title()}* · Self-disclosure = *{conv['self_disclosure_level'].title()}*
+if delta < -0.10:
+    verdict, vcolor, vbg = "Persona drift detected — the client agent drifted away from its assigned persona", "#922b21", "#FDEDEC"
+elif delta < -0.03:
+    verdict, vcolor, vbg = "Mild drift — subtle divergence from the assigned character", "#935116", "#FEF9E7"
+else:
+    verdict, vcolor, vbg = "Persona maintained — the client agent stayed true to its specification", "#1e6b3b", "#EAFAF1"
 
-Each coloured band measures one dimension of adherence to the spec. When a band **shrinks**, the agent is breaking character on that dimension. Every score is computed against the spec directly — not relative to previous turns. Each signal contributes up to **0.20**, stacking to a maximum of **1.0**.
+st.markdown(
+    f"""<div style='background:{vbg};border-left:4px solid {vcolor};
+                    border-radius:6px;padding:10px 18px;margin:12px 0 20px 0;'>
+          <span style='font-size:1.0rem;font-weight:600;color:{vcolor};'>{verdict}</span>
+        </div>""",
+    unsafe_allow_html=True,
+)
 
-| Signal | What drifting looks like |
-|--------|--------------------------|
-| 🔷 **Emotion Consistency** | Tone no longer matches *"{conv['current_emotion']}"* (TextBlob polarity vs. expected) |
-| 🔹 **Assertiveness Match** | Language too confident or too hesitant for *"{conv['assertiveness']}"* assertiveness (subjectivity score) |
-| 🩵 **Self-Disclosure Match** | Sharing too little or too much for *"{conv['self_disclosure_level']}"* disclosure (first-person pronoun ratio) |
-| 🟦 **No Filler Language** | Slipping into bot-speak — "absolutely", "great question", "happy to help" |
-| 🔵 **Personal Vocabulary** | Language becoming repetitive and generic (low type-token ratio) |
-""")
+st.divider()
 
-with st.expander("Per-turn data"):
-    # Build full conversation table (all turns)
-    all_rows = []
-    for t in conv["turns"]:
-        turn_idx = int(t.get("turn_index", 0))
-        is_client = t["speaker"] == "client"
-        # look up adherence scores for client turns
-        match = df[df["turn_seq"] == turn_idx]
-        if is_client and not match.empty:
-            row = match.iloc[0]
-            all_rows.append({
-                "Turn": turn_idx,
-                "Speaker": "Client",
-                "Adherence":             round(row["adherence_score"], 3),
-                "Emotion Consistency":   round(row["Emotion Consistency"], 3),
-                "Assertiveness Match":   round(row["Assertiveness Match"], 3),
-                "Self-Disclosure Match": round(row["Self-Disclosure Match"], 3),
-                "No Filler Language":    round(row["No Filler Language"], 3),
-                "Personal Vocabulary":   round(row["Personal Vocabulary"], 3),
-                "Text": t["text"],
-            })
-        else:
-            all_rows.append({
-                "Turn": turn_idx,
-                "Speaker": "Bot",
-                "Adherence": "",
-                "Emotion Consistency": "",
-                "Assertiveness Match": "",
-                "Self-Disclosure Match": "",
-                "No Filler Language": "",
-                "Personal Vocabulary": "",
-                "Text": t["text"],
-            })
-    full_df = pd.DataFrame(all_rows).sort_values("Turn").reset_index(drop=True)
-    st.dataframe(full_df, use_container_width=True, hide_index=True)
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Starting score", f"{first_val:.2f}")
+col2.metric("Final score",    f"{last_val:.2f}", delta=f"{delta:+.2f}")
+col3.metric("Total change",   f"{abs(delta):.2f}", delta=f"{delta:+.2f}", delta_color="inverse")
+col4.metric("Client turns",   str(len(df)))
+

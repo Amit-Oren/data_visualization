@@ -13,28 +13,26 @@ from textblob import TextBlob
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "conversations_GPT-GPT.jsonl")
 
-st.set_page_config(page_title="Adherence Density", layout="wide")
-st.title("How Is Persona Adherence Distributed Across Conversations?")
+st.set_page_config(page_title="Persona Drift Density", layout="wide")
+st.title("How Is Persona Drift Distributed Across Conversations?")
 
 st.markdown("**What**")
 st.markdown(
-    "Kernel density estimate (KDE) curves showing the full distribution of persona adherence scores "
-    "across conversations, overlaid by domain or emotion group. "
-    "Each curve is a smoothed probability density: tall and narrow means scores cluster tightly; "
-    "flat and wide means they spread across the range."
+    "A ridge plot of KDE curves showing how persona drift scores are distributed across conversations, "
+    "grouped by emotion. Each curve shows where drift levels concentrate, with a dotted line marking the mean."
 )
 
 st.markdown("""
 **Why**
-- To reveal whether most conversations achieve high fidelity or whether drift is the norm
-- To detect bimodal distributions where some conversations score very high and others very low — a sign of inconsistency within a group
-- To compare the shape of distributions across domains or emotions, not just their averages
+- Understand whether conversations stay stable or drift from the persona
+- Detect inconsistencies (e.g., some conversations drift a lot while others don't)
+- Compare drift patterns across emotions, not just average drift
 
 **How**
-- Per-conversation adherence scores were computed by averaging the five drift signals across all client turns
-- A Gaussian KDE was fitted to each group using Scott's bandwidth rule, then normalised so every ridge reaches the same peak height
-- Groups are stacked vertically (ridge plot), sorted by median adherence — the highest-scoring group sits at the top
-- A dotted vertical tick marks each group's median; individual scores are shown as a rug on each baseline
+- Score each turn using 5 signals → average to a conversation-level drift score (0–1)
+- Group conversations by emotion
+- Fit a Gaussian KDE per group (smooth distribution)
+- Normalize peaks and stack as a ridge plot, sorted by mean drift
 """)
 
 # ── Signal constants ───────────────────────────────────────────────────────────
@@ -139,33 +137,15 @@ def build_scores():
 
 df = build_scores()
 
-# ── Sidebar ────────────────────────────────────────────────────────────────────
-st.sidebar.header("Settings")
+group_by  = "Emotion"
+group_col = "emotion"
 
-group_by = st.sidebar.radio("Group by", ["Emotion", "Domain"], horizontal=True)
-group_col = "emotion" if group_by == "Emotion" else "domain"
-
-all_groups = sorted(df[group_col].unique())
-group_labels = {g: g.replace("_", " ").title() for g in all_groups}
-
-if group_by == "Emotion":
-    default = all_groups  # emotions are few enough to show all
-else:
-    default = all_groups[:6]
-
-selected_groups = st.sidebar.multiselect(
-    f"Select {group_by.lower()}s",
-    options=all_groups,
-    default=default,
-    format_func=lambda g: group_labels[g],
-)
+all_groups     = sorted(df[group_col].unique())
+group_labels   = {g: g.replace("_", " ").title() for g in all_groups}
+selected_groups = all_groups
 
 fill_alpha = 0.40
 overlap    = 0.8
-
-if not selected_groups:
-    st.warning("Select at least one group.")
-    st.stop()
 
 # ── Colour map ─────────────────────────────────────────────────────────────────
 PALETTE = [
@@ -266,7 +246,7 @@ y_max = (n - 1) * spacing + row_height * 1.1
 
 fig.update_layout(
     xaxis=dict(
-        title="Persona adherence score",
+        title="Persona drift score",
         range=[-0.02, 1.02],
         showgrid=True,
         gridcolor="#ECECEC",
@@ -287,19 +267,3 @@ fig.update_layout(
 
 st.plotly_chart(fig, use_container_width=True)
 
-# ── Summary stats ──────────────────────────────────────────────────────────────
-with st.expander("Summary statistics"):
-    rows = []
-    for group in selected_groups:
-        vals = df[df[group_col] == group]["adherence"].values
-        rows.append({
-            group_by: group_labels[group],
-            "N": len(vals),
-            "Mean":   round(float(np.mean(vals)), 3),
-            "Median": round(float(np.median(vals)), 3),
-            "Std":    round(float(np.std(vals)), 3),
-            "Min":    round(float(np.min(vals)), 3),
-            "Max":    round(float(np.max(vals)), 3),
-        })
-    st.dataframe(pd.DataFrame(rows).sort_values("Mean", ascending=False),
-                 use_container_width=True, hide_index=True)
