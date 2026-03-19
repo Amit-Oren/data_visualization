@@ -51,7 +51,7 @@ source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -r requirements.txt
 
 # 4. Run the app
-streamlit run Introduction.py
+streamlit run app.py
 ```
 
 The app will open at `http://localhost:8501`.
@@ -60,7 +60,7 @@ The app will open at `http://localhost:8501`.
 
 ```
 data_visualization/
-├── Introduction.py               # Home / introduction page
+├── app.py                        # Home / introduction page
 ├── pages/
 │   ├── 1_Demographics_Overview.py
 │   ├── 2_tSNE_Clustering.py
